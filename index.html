@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TSA IT · Unified Operating Model</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ─── TOP NAV ─────────────────────────────────────────────────────────── -->
+  <nav class="top-nav">
+    <span class="nav-brand">TSA IT · Program Command Centre</span>
+    <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab-btn"        data-tab="roadmap"   onclick="switchTab('roadmap')">Roadmap</button>
+    <div class="nav-spacer"></div>
+  </nav>
+
+  <!-- ─── DASHBOARD VIEW ──────────────────────────────────────────────────── -->
+  <div id="dashboard-view">
+
+    <!-- Header -->
+    <div class="dash-header">
+      <div class="dash-title-block">
+        <div class="dash-org">TSA IT · Program Command Centre</div>
+        <div class="dash-title">Unified IT</div>
+        <div class="dash-subtitle">Operating Model</div>
+      </div>
+      <div class="clock-block">
+        <span id="clock-time">--:--:--</span>
+        <span id="clock-date"></span>
+      </div>
+    </div>
+
+    <!-- Urgent banner -->
+    <div class="urgent-banner" id="urgent-banner">
+      <span class="urgent-dot"></span>
+      <span class="urgent-label">URGENT</span>
+      <span class="urgent-text">Loading…</span>
+    </div>
+
+    <!-- Milestones -->
+    <div class="milestones-section">
+      <div class="section-label">Key Milestones — Days Remaining</div>
+      <div class="milestones-grid" id="milestones-grid">
+        <!-- Rendered by dashboard.js -->
+      </div>
+    </div>
+
+    <!-- Workstreams + Attention -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="section-label">Workstream Status</div>
+        <div id="workstreams-list">
+          <!-- Rendered by dashboard.js -->
+        </div>
+      </div>
+      <div class="panel">
+        <div class="section-label">Needs Attention</div>
+        <div id="attention-list">
+          <!-- Rendered by dashboard.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress + Contacts -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="section-label">Program Progress to August Cutover</div>
+        <div id="progress-list">
+          <!-- Rendered by dashboard.js -->
+        </div>
+      </div>
+      <div class="panel">
+        <div class="section-label">Key Contacts — This Program</div>
+        <div class="contacts-grid" id="contacts-grid">
+          <!-- Rendered by dashboard.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="dash-footer">
+      <span class="footer-label" id="footer-label">TSA IT · UNIFIED OPERATING MODEL PROGRAM · CONFIDENTIAL</span>
+      <button class="refresh-btn" onclick="refreshDashboard()">⟳ Refresh</button>
+    </div>
+
+  </div><!-- /dashboard-view -->
+
+  <!-- ─── ROADMAP VIEW ─────────────────────────────────────────────────────── -->
+  <div id="roadmap-view" style="display:none;flex-direction:column;height:calc(100vh - 44px)">
+
+    <!-- Roadmap header -->
+    <div class="roadmap-header">
+      <div class="roadmap-title">TSA IT Unified Operating Model Program Roadmap</div>
+      <div class="roadmap-meta" id="roadmap-meta">FY2026–FY2028</div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="roadmap-toolbar">
+      <span class="toolbar-label">Filter:</span>
+      <select class="toolbar-select" id="stream-filter" onchange="applyStreamFilter()">
+        <option value="all">All Streams</option>
+        <!-- Options added dynamically -->
+      </select>
+      <div class="toolbar-divider"></div>
+      <span class="toolbar-label">Zoom:</span>
+      <button class="toolbar-btn zoom-btn active" data-zoom="month"   onclick="setZoom('month')">Month</button>
+      <button class="toolbar-btn zoom-btn"        data-zoom="quarter" onclick="setZoom('quarter')">Quarter</button>
+      <div class="toolbar-divider"></div>
+      <button class="toolbar-btn" onclick="exportHTML()">Export HTML</button>
+      <button class="toolbar-btn" onclick="window.print()">Print</button>
+      <div class="toolbar-spacer"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot legend-complete"></div>Complete</div>
+        <div class="legend-item"><div class="legend-dot legend-in_progress"></div>In Progress</div>
+        <div class="legend-item"><div class="legend-dot legend-planned"></div>Planned</div>
+        <div class="legend-item"><div class="legend-dot legend-at_risk"></div>At Risk</div>
+        <div class="legend-item"><div class="legend-dot legend-on_hold"></div>On Hold</div>
+        <div class="legend-item"><div class="legend-dot legend-behind"></div>Behind</div>
+        <div class="legend-item"><div class="legend-dot legend-blocked"></div>Blocked</div>
+      </div>
+    </div>
+
+    <!-- Gantt body -->
+    <div class="gantt-body">
+      <div class="gantt-left" id="gantt-left">
+        <!-- Left panel rendered by roadmap.js -->
+      </div>
+      <div class="gantt-right" id="gantt-right">
+        <!-- Timeline rendered by roadmap.js -->
+      </div>
+    </div>
+
+    <!-- Gantt footer -->
+    <div class="gantt-footer">
+      <div class="gantt-stat">
+        <span class="gantt-stat-num" id="gantt-total">0</span>
+        <span class="gantt-stat-label">Tasks</span>
+      </div>
+      <div class="gantt-stat">
+        <span class="gantt-stat-num" id="gantt-complete">0</span>
+        <span class="gantt-stat-label">Complete</span>
+      </div>
+      <div class="gantt-stat">
+        <span class="gantt-stat-num" id="gantt-inprog">0</span>
+        <span class="gantt-stat-label">In Progress</span>
+      </div>
+      <div class="gantt-stat">
+        <span class="gantt-stat-num" id="gantt-atrisk">0</span>
+        <span class="gantt-stat-label">At Risk</span>
+      </div>
+      <div class="gantt-overall-progress">
+        <div class="gantt-progress-track">
+          <div class="gantt-progress-fill" id="gantt-prog-fill" style="width:0%"></div>
+        </div>
+        <span class="gantt-progress-label" id="gantt-prog-label">Overall Program Progress — 0%</span>
+      </div>
+    </div>
+
+  </div><!-- /roadmap-view -->
+
+  <!-- ─── TASK POPOVER (shared) ────────────────────────────────────────────── -->
+  <div class="task-popover" id="task-popover"></div>
+
+  <!-- ─── FAB + SAVE ───────────────────────────────────────────────────────── -->
+  <div class="fab-group">
+    <button id="save-btn" onclick="saveAll()" style="display:none">
+      ✓ Save Changes
+    </button>
+    <button id="edit-fab" onclick="toggleEditMode()" title="Toggle edit mode">✏</button>
+  </div>
+
+  <!-- ─── TOAST ────────────────────────────────────────────────────────────── -->
+  <div class="toast" id="toast"></div>
+
+</div><!-- /app -->
+
+<!-- ─── SCRIPTS ──────────────────────────────────────────────────────────── -->
+<!-- Supabase JS v2 UMD (exposes window.supabase) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- SortableJS (exposes window.Sortable) -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+<!-- App scripts (order matters — client first, then seed, then views) -->
+<script src="js/supabase-client.js"></script>
+<script src="js/seed-data.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/roadmap.js"></script>
+
+<script>
+  // ─── BOOTSTRAP ─────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function() {
+
+    // Populate stream filter dropdown when switching to roadmap
+    document.querySelector('[data-tab="roadmap"]').addEventListener('click', function() {
+      const sel = document.getElementById('stream-filter');
+      if (!sel) return;
+      const existing = sel.querySelectorAll('option[data-stream]');
+      existing.forEach(o => o.remove());
+      APP.data.streams.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = String(s.id);
+        opt.dataset.stream = '1';
+        opt.textContent = s.name;
+        sel.appendChild(opt);
+      });
+    });
+
+    // Start the app
+    initApp();
+  });
+</script>
+
+</body>
+</html>
