@@ -1,6 +1,7 @@
 // ─── DASHBOARD RENDER & EDIT ─────────────────────────────────────────────────
 
 window.renderDashboard = function() {
+  renderEditHint();
   renderUrgentBanner();
   renderMilestones();
   renderWorkstreams();
@@ -9,6 +10,13 @@ window.renderDashboard = function() {
   renderContacts();
   updateFooter();
 };
+
+// ─── EDIT HINT BANNER ────────────────────────────────────────────────────────
+function renderEditHint() {
+  const el = document.getElementById('edit-hint');
+  if (!el) return;
+  el.style.display = APP.editMode ? 'flex' : 'none';
+}
 
 // ─── URGENT BANNER ───────────────────────────────────────────────────────────
 function renderUrgentBanner() {
@@ -412,7 +420,7 @@ function collectRows(containerId, selector, dataKey, fields) {
       const el = row.querySelector(`[data-field="${f}"]`);
       if (!el) return;
       if (el.tagName === 'INPUT' && el.type === 'range') {
-        entry[f] = parseInt(el.value) || 0;
+        entry[f] = Math.min(100, Math.max(0, parseInt(el.value) || 0));
       } else if (el.tagName === 'INPUT' || el.tagName === 'SELECT') {
         entry[f] = el.value.trim();
       } else {

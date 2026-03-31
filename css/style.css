@@ -578,10 +578,13 @@ input, select, textarea { font-family: inherit; }
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
+  height: 72px;           /* must match right-panel stream row height */
+  overflow: hidden;
   background: rgba(255,255,255,0.02);
   border-bottom: 1px solid var(--border-subtle);
   cursor: pointer;
   user-select: none;
+  box-sizing: border-box;
 }
 
 .gantt-stream-toggle {
@@ -747,7 +750,8 @@ input, select, textarea { font-family: inherit; }
   box-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
-.gantt-bar:hover { filter: brightness(1.15); }
+.gantt-bar:hover  { filter: brightness(1.15); }
+.gantt-bar:active { cursor: grabbing; }
 
 .gantt-bar.complete    { background: #2d7d4b; }
 .gantt-bar.in_progress { background: #1f4d8f; }
@@ -778,8 +782,7 @@ input, select, textarea { font-family: inherit; }
   flex-shrink: 0;
 }
 
-body.edit-mode .gantt-bar { cursor: grab; }
-body.edit-mode .gantt-bar:active { cursor: grabbing; }
+.gantt-bar { cursor: grab; }
 body.edit-mode .gantt-bar .resize-handle { display: block; }
 
 /* ─── GANTT FOOTER BAR ────────────────────────────────────────────────────── */
@@ -942,23 +945,24 @@ body.edit-mode .milestone-card {
 }
 
 #edit-fab {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: none;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
   background: var(--bg-card);
   color: var(--text-secondary);
-  font-size: 20px;
+  font-size: 13px;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 7px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   transition: all 0.2s;
-  border: 1px solid var(--border);
+  letter-spacing: 0.02em;
 }
 
-#edit-fab:hover   { background: var(--bg-card-hover); color: var(--text-primary); }
-#edit-fab.active  { background: var(--amber); color: #000; border-color: var(--amber); }
+#edit-fab:hover  { background: var(--bg-card-hover); color: var(--text-primary); border-color: var(--text-muted); }
+#edit-fab.active { background: var(--amber); color: #000; border-color: var(--amber); }
 
 #save-btn {
   display: none;

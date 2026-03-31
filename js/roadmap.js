@@ -178,8 +178,8 @@ function buildTimeline(streams, pxPerDay, totalW) {
       .sort((a, b) => a.sort_order - b.sort_order);
     const collapsed = _collapsed.has(stream.id);
 
-    // Stream separator row
-    rowsHtml += `<div class="gantt-stream-row-right" style="position:relative;height:56px;width:${totalW}px">
+    // Stream separator row — height must match .gantt-stream-header (72px)
+    rowsHtml += `<div class="gantt-stream-row-right" style="position:relative;height:72px;width:${totalW}px">
       ${colBgHtml}
       <div class="today-line" style="left:${todayLeft}px"></div>
     </div>`;
@@ -204,8 +204,7 @@ function buildTimeline(streams, pxPerDay, totalW) {
               data-stream="${stream.id}"
               ${isLong ? 'data-long="true"' : ''}
               style="left:${left}px;width:${width}px"
-              onmousedown="${APP.editMode ? `startBarDrag(event,${task.id})` : `openTaskPopover(event,${task.id})`}"
-              onclick="${!APP.editMode ? `openTaskPopover(event,${task.id})` : ''}">
+              onmousedown="startBarDrag(event,${task.id})">
               <span class="gantt-bar-text">${barLabel}</span>
               <div class="resize-handle" onmousedown="event.stopPropagation();startBarResize(event,${task.id})"></div>
             </div>
@@ -273,9 +272,19 @@ function syncScrolls() {
   const right = document.getElementById('gantt-right');
   if (!left || !right) return;
 
+  // Right scroll → mirror left position
   right.removeEventListener('scroll', right._syncHandler);
   right._syncHandler = () => { left.scrollTop = right.scrollTop; };
   right.addEventListener('scroll', right._syncHandler);
+
+  // Wheel on left panel → forward to right panel (fixes "can't scroll when hovering left")
+  left.removeEventListener('wheel', left._wheelHandler);
+  left._wheelHandler = (e) => {
+    e.preventDefault();
+    right.scrollTop  += e.deltaY;
+    right.scrollLeft += e.deltaX;
+  };
+  left.addEventListener('wheel', left._wheelHandler, { passive: false });
 }
 
 // ─── FILTER & ZOOM ───────────────────────────────────────────────────────────
@@ -291,8 +300,10 @@ window.setZoom = function(level) {
 };
 
 // ─── DRAG (MOVE BAR) ─────────────────────────────────────────────────────────
+// Bars are always draggable. If moved, auto-enter edit mode so changes can be saved.
+// If no movement detected (< 4px), treat as a click and open the task popover.
+
 window.startBarDrag = function(e, taskId) {
-  if (!APP.editMode) return;
   if (e.target.classList.contains('resize-handle')) return;
   e.preventDefault();
 
@@ -300,11 +311,12 @@ window.startBarDrag = function(e, taskId) {
   if (!task) return;
 
   _drag = {
-    type:     'move',
+    type:      'move',
     taskId,
-    startX:   e.clientX,
+    startX:    e.clientX,
     origStart: task.start_date,
-    origEnd:   task.end_date
+    origEnd:   task.end_date,
+    moved:     false
   };
 
   document.addEventListener('mousemove', _onDragMove);
@@ -312,7 +324,6 @@ window.startBarDrag = function(e, taskId) {
 };
 
 window.startBarResize = function(e, taskId) {
-  if (!APP.editMode) return;
   e.preventDefault();
 
   const task = APP.data.tasks.find(t => t.id === taskId);
@@ -322,7 +333,8 @@ window.startBarResize = function(e, taskId) {
     type:    'resize',
     taskId,
     startX:  e.clientX,
-    origEnd: task.end_date
+    origEnd: task.end_date,
+    moved:   false
   };
 
   document.addEventListener('mousemove', _onDragMove);
@@ -331,10 +343,13 @@ window.startBarResize = function(e, taskId) {
 
 function _onDragMove(e) {
   if (!_drag) return;
-  const task     = APP.data.tasks.find(t => t.id === _drag.taskId);
+  const task = APP.data.tasks.find(t => t.id === _drag.taskId);
   if (!task) return;
 
-  const deltaX   = e.clientX - _drag.startX;
+  const deltaX = e.clientX - _drag.startX;
+  if (Math.abs(deltaX) < 4) return; // threshold: below this treat as click
+  _drag.moved = true;
+
   const deltaDays = Math.round(deltaX / APP.zoom);
 
   if (_drag.type === 'move') {
@@ -350,7 +365,7 @@ function _onDragMove(e) {
     ));
   }
 
-  // Live update only the bar
+  // Live-update bar position in DOM (no full re-render during drag)
   const bar = document.querySelector(`.gantt-bar[data-id="${_drag.taskId}"]`);
   if (bar) {
     const left  = Math.round(dayOffset(new Date(task.start_date + 'T00:00:00')) * APP.zoom);
@@ -362,10 +377,22 @@ function _onDragMove(e) {
   }
 }
 
-function _onDragEnd() {
+function _onDragEnd(e) {
+  if (!_drag) return;
+  const { taskId, moved } = _drag;
   _drag = null;
   document.removeEventListener('mousemove', _onDragMove);
   document.removeEventListener('mouseup',   _onDragEnd);
+
+  if (moved) {
+    // Auto-enter edit mode so user can save the change
+    markDirty();
+    buildRoadmapHeader();
+    updateRoadmapFooter();
+  } else {
+    // No movement — treat as click, open popover
+    openTaskPopover(e, taskId);
+  }
 }
 
 // ─── TASK POPOVER ────────────────────────────────────────────────────────────

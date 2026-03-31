@@ -164,6 +164,7 @@ window.toggleEditMode = function() {
   const fab     = document.getElementById('edit-fab');
   const saveBtn = document.getElementById('save-btn');
   fab.classList.toggle('active', APP.editMode);
+  fab.textContent = APP.editMode ? '✏ Editing…' : '✏ Edit';
   saveBtn.style.display = APP.editMode ? 'flex' : 'none';
   document.body.classList.toggle('edit-mode', APP.editMode);
 
@@ -194,6 +195,7 @@ window.saveAll = async function() {
     APP.editMode = false;
     document.body.classList.remove('edit-mode');
     document.getElementById('edit-fab').classList.remove('active');
+    document.getElementById('edit-fab').textContent = '✏ Edit';
     document.getElementById('save-btn').style.display = 'none';
     document.getElementById('save-btn').disabled = false;
     APP.sortables.forEach(s => { try { s.destroy(); } catch (_) {} });
@@ -208,6 +210,20 @@ window.saveAll = async function() {
     showToast('Save failed: ' + err.message, 'error');
     document.getElementById('save-btn').disabled = false;
   }
+};
+
+// ─── MARK DIRTY (unsaved changes exist) ──────────────────────────────────────
+// Called by roadmap drag to auto-enter edit mode without the user pressing Edit.
+window.markDirty = function() {
+  if (APP.editMode) return;
+  APP.editMode = true;
+  document.body.classList.add('edit-mode');
+  document.getElementById('edit-fab').classList.add('active');
+  document.getElementById('edit-fab').textContent = '✏ Editing…';
+  document.getElementById('save-btn').style.display = 'flex';
+  // Re-render current view to show edit controls
+  if (APP.currentTab === 'roadmap') renderRoadmap();
+  else renderDashboard();
 };
 
 // ─── CLOCK ───────────────────────────────────────────────────────────────────
